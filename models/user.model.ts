@@ -12,7 +12,7 @@ export interface IUser extends Document {
   user_invite: string;
   parent_invt: string;
   grand_parent_invt: string;
-  great_grand_parent_invt:string;
+  great_grand_parent_invt: string;
   avatar: {
     public_id: string;
     url: string;
@@ -23,8 +23,21 @@ export interface IUser extends Document {
   firstLevelData: Array<{ userId: string }>;
   secondLevelData: Array<{ userId: string }>;
   thirdLevelData: Array<{ userId: string }>;
-
-
+  withdrawals: Array<{}>;
+  placed_recharges: Array<{}>
+  balance: number;
+  recharge_amount: number;
+  earning: number;
+  withdrawal_sum: number;
+  lastWithdrawal: Date;
+  tradePassword:string;
+  bankDetails:{
+    bankName:string;
+    bankAccount:number;
+    cardHolderName:string;
+    ifsc:string;
+    mobileNumber:string;
+  }
   comparePassword: (password: string) => Promise<boolean>;
   SignAccessToken: () => string;
   SignRefreshToken: () => string;
@@ -55,7 +68,6 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
     user_invite: {
       type: String,
       minlength: 6,
-      
     },
     parent_invt: {
       type: String,
@@ -75,6 +87,25 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       type: String,
       default: "user",
     },
+    balance: {
+      type: Number,
+      default: 0,
+    },
+    recharge_amount: {
+      type: Number,
+      default: 0,
+    },
+    earning: {
+      type: Number,
+      default: 0,
+    },
+    withdrawal_sum: {
+      type: Number,
+      default: 0,
+    },
+    lastWithdrawal: {
+      type: Date
+    },
     isVerified: {
       type: Boolean,
       default: false,
@@ -84,9 +115,19 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
         courseId: String,
       },
     ],
+    bankDetails:{
+      bankName:String,
+      bankAccount:Number,
+      cardHolderName:String,
+      ifsc:String,
+      mobileNumber:String
+    },
+    tradePassword:String,
     firstLevelData: [{}],
     secondLevelData: [{}],
     thirdLevelData: [{}],
+    withdrawals: [{}],
+    placed_recharges: [{}],
 
   },
   { timestamps: true }

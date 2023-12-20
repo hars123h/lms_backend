@@ -13,20 +13,25 @@ import {
   getSingleCourse,
   uploadCourse,
 } from "../controllers/course.controller";
-import { authorizeRoles, isAutheticated } from "../middleware/auth";
+import {
+  adminMiddleware,
+  authorizeRoles,
+  isAutheticated,
+  requireSignin,
+} from "../middleware/auth";
 const courseRouter = express.Router();
 
 courseRouter.post(
   "/create-course",
-  isAutheticated,
-  authorizeRoles("admin"),
+  requireSignin,
+  adminMiddleware,
   uploadCourse
 );
 
 courseRouter.put(
   "/edit-course/:id",
-  isAutheticated,
-  authorizeRoles("admin"),
+  requireSignin,
+  adminMiddleware,
   editCourse
 );
 
@@ -36,8 +41,8 @@ courseRouter.get("/get-courses", getAllCourses);
 
 courseRouter.get(
   "/get-admin-courses",
-  isAutheticated,
-  authorizeRoles("admin"),
+  requireSignin,
+  adminMiddleware,
   getAdminAllCourses
 );
 
@@ -60,8 +65,8 @@ courseRouter.put(
 
 courseRouter.delete(
   "/delete-course/:id",
-  isAutheticated,
-  authorizeRoles("admin"),
+  requireSignin,
+  adminMiddleware,
   deleteCourse
 );
 

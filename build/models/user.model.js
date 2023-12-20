@@ -50,6 +50,25 @@ const userSchema = new mongoose_1.default.Schema({
         type: String,
         default: "user",
     },
+    balance: {
+        type: Number,
+        default: 0,
+    },
+    recharge_amount: {
+        type: Number,
+        default: 0,
+    },
+    earning: {
+        type: Number,
+        default: 0,
+    },
+    withdrawal_sum: {
+        type: Number,
+        default: 0,
+    },
+    lastWithdrawal: {
+        type: Date
+    },
     isVerified: {
         type: Boolean,
         default: false,
@@ -59,9 +78,19 @@ const userSchema = new mongoose_1.default.Schema({
             courseId: String,
         },
     ],
+    bankDetails: {
+        bankName: String,
+        bankAccount: Number,
+        cardHolderName: String,
+        ifsc: String,
+        mobileNumber: String
+    },
+    tradePassword: String,
     firstLevelData: [{}],
     secondLevelData: [{}],
     thirdLevelData: [{}],
+    withdrawals: [{}],
+    placed_recharges: [{}],
 }, { timestamps: true });
 // Hash Password before saving
 userSchema.pre("save", async function (next) {

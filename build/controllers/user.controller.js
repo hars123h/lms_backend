@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUserRole = exports.getAllUsers = exports.updateProfilePicture = exports.updatePassword = exports.updateUserInfo = exports.socialAuth = exports.getUserInfo = exports.updateAccessToken = exports.logoutUser = exports.loginUser = exports.activateUser = exports.createActivationToken = exports.registrationUser = void 0;
+exports.deleteUser = exports.updateUserRole = exports.getTestAuth = exports.getAllUsers = exports.updateProfilePicture = exports.updatePassword = exports.updateUserInfo = exports.socialAuth = exports.getUserInfo = exports.updateAccessToken = exports.logoutUser = exports.loginUser = exports.activateUser = exports.createActivationToken = exports.registrationUser = void 0;
 require("dotenv").config();
 const user_model_1 = __importDefault(require("../models/user.model"));
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
@@ -126,7 +126,13 @@ exports.loginUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, nex
         if (!isPasswordMatch) {
             return next(new ErrorHandler_1.default("Invalid email or password", 400));
         }
-        (0, jwt_1.sendToken)(user, 200, res);
+        const token = jsonwebtoken_1.default.sign({ _id: user._id }, process.env.REFRESH_TOKEN || "adsljfhjklasdfhjklansdfjklnasdfhjlkj", { expiresIn: "7d" });
+        res.status(200).json({
+            success: true,
+            user,
+            token,
+        });
+        // sendToken(user, 200, res);
     }
     catch (error) {
         return next(new ErrorHandler_1.default(error.message, 400));
@@ -161,6 +167,7 @@ exports.updateAccessToken = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, 
             return next(new ErrorHandler_1.default(message, 400));
         }
         const session = await redis_1.redis.get(decoded.id);
+        // console.log("thisissession",session);
         if (!session) {
             return next(new ErrorHandler_1.default("Please login for access this resources!", 400));
         }
@@ -188,8 +195,13 @@ exports.updateAccessToken = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, 
 // get user info
 exports.getUserInfo = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
-        const userId = req.user?._id;
-        (0, user_service_1.getUserById)(userId, res);
+        const userId = req.auth?._id;
+        console.log("USER", userId);
+        const user = await user_model_1.default.findOne({ _id: userId });
+        res.status(200).json({
+            success: true,
+            user,
+        });
     }
     catch (error) {
         return next(new ErrorHandler_1.default(error.message, 400));
@@ -215,13 +227,13 @@ exports.socialAuth = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
 exports.updateUserInfo = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
         const { name } = req.body;
-        const userId = req.user?._id;
+        const userId = req.auth?._id;
         const user = await user_model_1.default.findById(userId);
         if (name && user) {
             user.name = name;
         }
         await user?.save();
-        await redis_1.redis.set(userId, JSON.stringify(user));
+        // await redis.set(userId, JSON.stringify(user));
         res.status(201).json({
             success: true,
             user,
@@ -237,7 +249,7 @@ exports.updatePassword = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res
         if (!oldPassword || !newPassword) {
             return next(new ErrorHandler_1.default("Please enter old and new password", 400));
         }
-        const user = await user_model_1.default.findById(req.user?._id).select("+password");
+        const user = await user_model_1.default.findById(req.auth?._id).select("+password");
         if (user?.password === undefined) {
             return next(new ErrorHandler_1.default("Invalid user", 400));
         }
@@ -260,7 +272,7 @@ exports.updatePassword = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res
 exports.updateProfilePicture = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
         const { avatar } = req.body;
-        const userId = req.user?._id;
+        const userId = req.auth?._id;
         const user = await user_model_1.default.findById(userId).select("+password");
         if (avatar && user) {
             // if user have one avatar then call this if
@@ -302,6 +314,18 @@ exports.updateProfilePicture = (0, catchAsyncErrors_1.CatchAsyncError)(async (re
 exports.getAllUsers = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
         (0, user_service_1.getAllUsersService)(res);
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 400));
+    }
+});
+exports.getTestAuth = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
+    try {
+        console.log("userId", req.auth);
+        res.status(201).json({
+            success: true,
+            message: "Testing  Jwt"
+        });
     }
     catch (error) {
         return next(new ErrorHandler_1.default(error.message, 400));

@@ -9,7 +9,9 @@ import path from "path";
 import sendMail from "../utils/sendMail";
 import cloudinary from "cloudinary";
 const referralCodeGenerator = require("referral-code-generator");
-
+import { expressjwt, Request as JWTRequest } from "express-jwt";
+import { ParamsDictionary } from 'express-serve-static-core';
+import { ParsedQs } from 'qs';
 import {
   accessTokenOptions,
   refreshTokenOptions,
@@ -22,6 +24,7 @@ import {
   updateUserRoleService,
 } from "../services/user.service";
 import { log } from "console";
+import { requireSignin } from "../middleware/auth";
 
 // Register user
 interface IRegistrationBody {
@@ -31,6 +34,10 @@ interface IRegistrationBody {
   avatar?: string;
   parent_invt: string;
 }
+interface RequestWithAuth extends Request<ParamsDictionary, any, any, ParsedQs> {
+  auth?: any; // Replace 'any' with the actual type of 'auth'
+}
+
 
 export const registrationUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -204,8 +211,18 @@ export const loginUser = CatchAsyncError(
       if (!isPasswordMatch) {
         return next(new ErrorHandler("Invalid email or password", 400));
       }
+      const token = jwt.sign(
+        { _id: user._id },
+        process.env.REFRESH_TOKEN || "adsljfhjklasdfhjklansdfjklnasdfhjlkj",
+        { expiresIn: "7d" }
+      );
+      res.status(200).json({
+        success: true,
+        user,
+        token,
+      });
 
-      sendToken(user, 200, res);
+      // sendToken(user, 200, res);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
@@ -249,6 +266,8 @@ export const updateAccessToken = CatchAsyncError(
         return next(new ErrorHandler(message, 400));
       }
       const session = await redis.get(decoded.id as string);
+
+      // console.log("thisissession",session);
 
       if (!session) {
         return next(
@@ -294,10 +313,15 @@ export const updateAccessToken = CatchAsyncError(
 
 // get user info
 export const getUserInfo = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user?._id;
-      getUserById(userId, res);
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+    try { 
+      const userId = req.auth?._id;
+      console.log("USER", userId);
+      const user = await userModel.findOne({ _id: userId });
+      res.status(200).json({
+        success: true,
+        user,
+      });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
@@ -335,16 +359,16 @@ interface IUpdateUserInfo {
 }
 
 export const updateUserInfo = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
       const { name } = req.body as IUpdateUserInfo;
-      const userId = req.user?._id;
+      const userId = req.auth?._id;
       const user = await userModel.findById(userId);
       if (name && user) {
         user.name = name;
       }
       await user?.save();
-      await redis.set(userId, JSON.stringify(user));
+      // await redis.set(userId, JSON.stringify(user));
       res.status(201).json({
         success: true,
         user,
@@ -362,7 +386,7 @@ interface IUpdatePassword {
 }
 
 export const updatePassword = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
       const { oldPassword, newPassword } = req.body as IUpdatePassword;
 
@@ -370,7 +394,7 @@ export const updatePassword = CatchAsyncError(
         return next(new ErrorHandler("Please enter old and new password", 400));
       }
 
-      const user = await userModel.findById(req.user?._id).select("+password");
+      const user = await userModel.findById(req.auth?._id).select("+password");
 
       if (user?.password === undefined) {
         return next(new ErrorHandler("Invalid user", 400));
@@ -404,11 +428,11 @@ interface IUpdateProfilePicture {
 }
 
 export const updateProfilePicture = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
       const { avatar } = req.body as IUpdateProfilePicture;
 
-      const userId = req.user?._id;
+      const userId = req.auth?._id;
 
       const user = await userModel.findById(userId).select("+password");
 
@@ -453,6 +477,20 @@ export const getAllUsers = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       getAllUsersService(res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+export const getTestAuth = CatchAsyncError(
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+    try {
+      console.log("userId", req.auth);
+      res.status(201).json({
+        success: true,
+       message:"Testing  Jwt"
+      });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }

@@ -1,5 +1,5 @@
 import express from "express";
-import { authorizeRoles, isAutheticated } from "../middleware/auth";
+import { adminMiddleware, authorizeRoles, isAutheticated, requireSignin } from "../middleware/auth";
 import {
   createOrder,
   getAllOrders,
@@ -12,8 +12,8 @@ orderRouter.post("/create-order", isAutheticated, createOrder);
 
 orderRouter.get(
   "/get-orders",
-  isAutheticated,
-  authorizeRoles("admin"),
+  requireSignin,
+  adminMiddleware,
   getAllOrders
 );
 

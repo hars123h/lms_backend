@@ -14,30 +14,33 @@ const user_route_1 = __importDefault(require("./routes/user.route"));
 const course_route_1 = __importDefault(require("./routes/course.route"));
 const order_route_1 = __importDefault(require("./routes/order.route"));
 const notification_route_1 = __importDefault(require("./routes/notification.route"));
+const withdraw_route_1 = __importDefault(require("./routes/withdraw.route"));
+const recharge_route_1 = __importDefault(require("./routes/recharge.route"));
 const analytics_route_1 = __importDefault(require("./routes/analytics.route"));
 const layout_route_1 = __importDefault(require("./routes/layout.route"));
-const express_rate_limit_1 = require("express-rate-limit");
 //bodyparser
 exports.app.use(express_1.default.json({ limit: "50mb" }));
 //cookie-parser
 exports.app.use((0, cookie_parser_1.default)());
 //cors
 exports.app.use((0, cors_1.default)({
-    origin: ["https://lms-frontend-azure-eight.vercel.app"],
+    origin: ["https://lms-frontend-azure-eight.vercel.app", "http://localhost:3000"],
     credentials: true,
 }));
 // api requests limit
-const limiter = (0, express_rate_limit_1.rateLimit)({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-});
+// const limiter = rateLimit({
+// 	windowMs: 15 * 60 * 1000,
+// 	max: 100, 
+// 	standardHeaders: 'draft-7', 
+// 	legacyHeaders: false, 
+// })
 // Routes
 exports.app.use("/api/v1", user_route_1.default);
 exports.app.use("/api/v1", course_route_1.default);
 exports.app.use("/api/v1", order_route_1.default);
 exports.app.use("/api/v1", notification_route_1.default);
+exports.app.use("/api/v1", withdraw_route_1.default);
+exports.app.use("/api/v1", recharge_route_1.default);
 exports.app.use("/api/v1", analytics_route_1.default);
 exports.app.use("/api/v1", layout_route_1.default);
 //testing api
@@ -53,5 +56,5 @@ exports.app.all("*", (req, res, next) => {
     err.statusCode = 404;
     next(err);
 });
-exports.app.use(limiter);
+// app.use(limiter);
 exports.app.use(error_1.ErrorMiddleware);
