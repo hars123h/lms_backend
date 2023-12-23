@@ -26,4 +26,5 @@ userRouter.put("/update-user-avatar", auth_2.requireSignin, user_controller_1.up
 userRouter.get("/get-users", auth_2.requireSignin, auth_1.adminMiddleware, user_controller_1.getAllUsers);
 userRouter.put("/update-user", auth_2.requireSignin, auth_1.adminMiddleware, user_controller_1.updateUserRole);
 userRouter.delete("/delete-user/:id", auth_2.requireSignin, auth_1.adminMiddleware, user_controller_1.deleteUser);
+userRouter.post("/get-single-user", auth_2.requireSignin, auth_1.adminMiddleware, user_controller_1.getSingleUser);
 exports.default = userRouter;

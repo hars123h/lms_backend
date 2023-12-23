@@ -33,6 +33,7 @@ const orderSchema = new mongoose_1.Schema({
         type: String,
         required: true
     },
+    purchasedPrice: Number,
     payment_info: {
         type: Object,
         // required: true

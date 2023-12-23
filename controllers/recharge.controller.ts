@@ -137,9 +137,31 @@ export const getRecharge = CatchAsyncError(
 // get all Recharge --- only for Users
 export const getUserRecharge = CatchAsyncError(
   async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+    
     try {
       const recharge = await RechargeModel.find({
-        user_id: req.auth?._id,
+        user_id: req?.auth?._id,
+      }).sort({
+        createdAt: -1,
+      });
+      
+      res.status(201).json({
+        success: true,
+        recharge,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
+// get User Recharge --- only for Admins
+export const getUserRechargeAdmin = CatchAsyncError(
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+    const data = req.body;
+    try {
+      const recharge = await RechargeModel.find({
+        user_id: data?.userId,
       }).sort({
         createdAt: -1,
       });

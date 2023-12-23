@@ -13,4 +13,5 @@ withdrawRoute.post("/update-withdrawal-status", auth_1.requireSignin, auth_1.adm
 withdrawRoute.post("/add-bank", auth_1.requireSignin, withdraw_controller_1.addBankDetails);
 withdrawRoute.post("/trade-password", auth_1.requireSignin, withdraw_controller_1.setTradePassword);
 withdrawRoute.get("/get-user-withdrawal", auth_1.requireSignin, withdraw_controller_1.getUserWithdrawal);
+withdrawRoute.post("/get-admin-withdrawal", auth_1.requireSignin, withdraw_controller_1.getUserWithdrawalAdmin);
 exports.default = withdrawRoute;

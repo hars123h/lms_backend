@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserRecharge = exports.getRecharge = exports.updateRecharge = exports.placeRecharge = void 0;
+exports.getUserRechargeAdmin = exports.getUserRecharge = exports.getRecharge = exports.updateRecharge = exports.placeRecharge = void 0;
 // import WithdrawModel from "../models/withdraw.model";
 const user_model_1 = __importDefault(require("../models/user.model"));
 const catchAsyncErrors_1 = require("../middleware/catchAsyncErrors");
@@ -108,7 +108,25 @@ exports.getRecharge = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, n
 exports.getUserRecharge = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
         const recharge = await recharge_model_1.default.find({
-            user_id: req.auth?._id,
+            user_id: req?.auth?._id,
+        }).sort({
+            createdAt: -1,
+        });
+        res.status(201).json({
+            success: true,
+            recharge,
+        });
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 500));
+    }
+});
+// get User Recharge --- only for Admins
+exports.getUserRechargeAdmin = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
+    const data = req.body;
+    try {
+        const recharge = await recharge_model_1.default.find({
+            user_id: data?.userId,
         }).sort({
             createdAt: -1,
         });

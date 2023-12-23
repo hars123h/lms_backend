@@ -12,11 +12,18 @@ import { getAllOrdersService, newOrder } from "../services/order.service";
 import { redis } from "../utils/redis";
 require("dotenv").config();
 
+import { ParamsDictionary } from "express-serve-static-core";
+import { ParsedQs } from "qs";
+
+interface RequestWithAuth
+  extends Request<ParamsDictionary, any, any, ParsedQs> {
+  auth?: any; // Replace 'any' with the actual type of 'auth'
+}
 // create order
 export const createOrder = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
-      const { courseId, payment_info } = req.body as IOrder;
+      const { courseId, payment_info, purchasedPrice } = req.body as IOrder;
 
       // if (payment_info) {
       //   if ("id" in payment_info) {
@@ -31,7 +38,7 @@ export const createOrder = CatchAsyncError(
       //   }
       // }
 
-      const user = await userModel.findById(req.user?._id);
+      const user = await userModel.findById(req.auth?._id);
 
       const courseExistInUser = user?.courses.some(
         (course: any) => course._id.toString() === courseId
@@ -48,7 +55,6 @@ export const createOrder = CatchAsyncError(
       if (!course) {
         return next(new ErrorHandler("Course not found", 404));
       }
-
       const data: any = {
         courseId: course._id,
         userId: user?._id,
@@ -72,7 +78,6 @@ export const createOrder = CatchAsyncError(
         path.join(__dirname, "../mails/order-confirmation.ejs"),
         { order: mailData }
       );
-
       try {
         if (user) {
           await sendMail({
@@ -87,20 +92,48 @@ export const createOrder = CatchAsyncError(
       }
 
       user?.courses.push(course?._id);
-
       await redis.set(req.user?._id, JSON.stringify(user));
-
       await user?.save();
-
       await NotificationModel.create({
         user: user?._id,
         title: "New Order",
         message: `You have a new order from ${course?.name}`,
       });
-
       course.purchased = course.purchased + 1;
-
       await course.save();
+      // Level 1  commission
+      const level1 = await userModel.updateOne(
+        { user_invite: user?.parent_invt },
+        {
+          $inc: {
+            earning: Number((10 / 100) * Number(purchasedPrice)),
+            level1Recharge: Number((10 / 100) * Number(purchasedPrice)),
+          },
+        }
+      );
+
+      // Level 2  commission
+      const level2 = await userModel.updateOne(
+        { user_invite: user?.grand_parent_invt },
+        {
+          $inc: {
+            earning: Number((3 / 100) * Number(purchasedPrice)),
+            level2Recharge: Number((3 / 100) * Number(purchasedPrice)),
+          },
+        }
+      );
+
+      // Level 3  commission
+      const level3 = await userModel.updateOne(
+        { user_invite: user?.great_grand_parent_invt },
+        {
+          $inc: {
+            earning: Number((1 / 100) * Number(purchasedPrice)),
+            level3Recharge: Number((1 / 100) * Number(purchasedPrice)),
+          },
+        }
+      );
+
 
       newOrder(data, res, next);
     } catch (error: any) {

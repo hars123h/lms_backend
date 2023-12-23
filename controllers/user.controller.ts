@@ -10,8 +10,8 @@ import sendMail from "../utils/sendMail";
 import cloudinary from "cloudinary";
 const referralCodeGenerator = require("referral-code-generator");
 import { expressjwt, Request as JWTRequest } from "express-jwt";
-import { ParamsDictionary } from 'express-serve-static-core';
-import { ParsedQs } from 'qs';
+import { ParamsDictionary } from "express-serve-static-core";
+import { ParsedQs } from "qs";
 import {
   accessTokenOptions,
   refreshTokenOptions,
@@ -34,10 +34,10 @@ interface IRegistrationBody {
   avatar?: string;
   parent_invt: string;
 }
-interface RequestWithAuth extends Request<ParamsDictionary, any, any, ParsedQs> {
+interface RequestWithAuth
+  extends Request<ParamsDictionary, any, any, ParsedQs> {
   auth?: any; // Replace 'any' with the actual type of 'auth'
 }
-
 
 export const registrationUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -55,7 +55,6 @@ export const registrationUser = CatchAsyncError(
       };
 
       const activationToken = createActivationToken(user);
-
       const activationCode = activationToken.activationCode;
       const data = { user: { name: user.name }, activationCode };
       const html = await ejs.renderFile(
@@ -314,10 +313,28 @@ export const updateAccessToken = CatchAsyncError(
 // get user info
 export const getUserInfo = CatchAsyncError(
   async (req: RequestWithAuth, res: Response, next: NextFunction) => {
-    try { 
+    try {
       const userId = req.auth?._id;
       console.log("USER", userId);
       const user = await userModel.findOne({ _id: userId });
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// get user info --only Admin
+export const getSingleUser = CatchAsyncError(
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+    try {
+      const data = req.body
+      const userId = req.auth?._id;
+      // console.log("USER", userId);
+      const user = await userModel.findOne({ _id: data?.userId });
       res.status(200).json({
         success: true,
         user,
@@ -356,16 +373,33 @@ export const socialAuth = CatchAsyncError(
 interface IUpdateUserInfo {
   name?: string;
   email?: string;
+  whatsappNo?: string;
+  teleId?: string;
+  dob?: string;
+  profession?: string;
 }
 
 export const updateUserInfo = CatchAsyncError(
   async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
-      const { name } = req.body as IUpdateUserInfo;
+      const { name, whatsappNo, teleId, dob, profession } =
+        req.body as IUpdateUserInfo;
       const userId = req.auth?._id;
       const user = await userModel.findById(userId);
       if (name && user) {
         user.name = name;
+      }
+      if (whatsappNo && user) {
+        user.whatsappNo = whatsappNo;
+      }
+      if (teleId && user) {
+        user.teleId = teleId;
+      }
+      if (dob && user) {
+        user.dob = dob;
+      }
+      if (profession && user) {
+        user.profession = profession;
       }
       await user?.save();
       // await redis.set(userId, JSON.stringify(user));
@@ -489,7 +523,7 @@ export const getTestAuth = CatchAsyncError(
       console.log("userId", req.auth);
       res.status(201).json({
         success: true,
-       message:"Testing  Jwt"
+        message: "Testing  Jwt",
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));

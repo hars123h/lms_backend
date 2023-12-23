@@ -7,7 +7,7 @@ const express_1 = __importDefault(require("express"));
 const auth_1 = require("../middleware/auth");
 const order_controller_1 = require("../controllers/order.controller");
 const orderRouter = express_1.default.Router();
-orderRouter.post("/create-order", auth_1.isAutheticated, order_controller_1.createOrder);
+orderRouter.post("/create-order", auth_1.requireSignin, order_controller_1.createOrder);
 orderRouter.get("/get-orders", auth_1.requireSignin, auth_1.adminMiddleware, order_controller_1.getAllOrders);
 // orderRouter.get("/payment/stripepublishablekey", sendStripePublishableKey);
 // orderRouter.post("/payment", isAutheticated, newPayment);

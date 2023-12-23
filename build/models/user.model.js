@@ -13,6 +13,10 @@ const userSchema = new mongoose_1.default.Schema({
         type: String,
         required: [true, "Please enter your name"],
     },
+    whatsappNo: String,
+    teleId: String,
+    dob: String,
+    profession: String,
     email: {
         type: String,
         required: [true, "Please enter your email"],
@@ -59,6 +63,18 @@ const userSchema = new mongoose_1.default.Schema({
         default: 0,
     },
     earning: {
+        type: Number,
+        default: 0,
+    },
+    level1Recharge: {
+        type: Number,
+        default: 0,
+    },
+    level2Recharge: {
+        type: Number,
+        default: 0,
+    },
+    level3Recharge: {
         type: Number,
         default: 0,
     },

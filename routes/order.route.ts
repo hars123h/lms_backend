@@ -8,7 +8,7 @@ import {
 } from "../controllers/order.controller";
 const orderRouter = express.Router();
 
-orderRouter.post("/create-order", isAutheticated, createOrder);
+orderRouter.post("/create-order", requireSignin, createOrder);
 
 orderRouter.get(
   "/get-orders",

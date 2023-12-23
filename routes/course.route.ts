@@ -36,9 +36,7 @@ courseRouter.put(
 );
 
 courseRouter.get("/get-course/:id", getSingleCourse);
-
 courseRouter.get("/get-courses", getAllCourses);
-
 courseRouter.get(
   "/get-admin-courses",
   requireSignin,
@@ -46,18 +44,23 @@ courseRouter.get(
   getAdminAllCourses
 );
 
-courseRouter.get("/get-course-content/:id", isAutheticated, getCourseByUser);
 
-courseRouter.put("/add-question", isAutheticated, addQuestion);
+courseRouter.get(
+  "/get-course-content/:id",
+  requireSignin,
+  getCourseByUser
+);
 
-courseRouter.put("/add-answer", isAutheticated, addAnwser);
+courseRouter.put("/add-question", requireSignin, addQuestion);
 
-courseRouter.put("/add-review/:id", isAutheticated, addReview);
+courseRouter.put("/add-answer", requireSignin, addAnwser);
+
+courseRouter.put("/add-review/:id", requireSignin, addReview);
 
 courseRouter.put(
   "/add-reply",
-  isAutheticated,
-  authorizeRoles("admin"),
+  requireSignin,
+  adminMiddleware,
   addReplyToReview
 );
 

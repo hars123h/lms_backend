@@ -15,7 +15,7 @@ const path_1 = __importDefault(require("path"));
 const ejs_1 = __importDefault(require("ejs"));
 const sendMail_1 = __importDefault(require("../utils/sendMail"));
 const notification_Model_1 = __importDefault(require("../models/notification.Model"));
-// import axios from "axios";
+const user_model_1 = __importDefault(require("../models/user.model"));
 // upload course
 exports.uploadCourse = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
@@ -112,9 +112,13 @@ exports.getAllCourses = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res,
 // get course content -- only for valid user
 exports.getCourseByUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
-        const userCourseList = req.user?.courses;
+        console.log("Auth me kya hai", req.auth);
+        const userCourses = await user_model_1.default.findOne({ _id: req.auth._id });
+        // const userCourseList = req.user?.courses;
         const courseId = req.params.id;
-        const courseExists = userCourseList?.find((course) => course._id.toString() === courseId);
+        console.log("User cOURSES", userCourses?.courses);
+        const courseExists = userCourses?.courses?.find((course) => course._id.toString() === courseId);
+        console.log("Course Exist", courseExists);
         if (!courseExists) {
             return next(new ErrorHandler_1.default("You are not eligible to access this course", 404));
         }
@@ -133,6 +137,7 @@ exports.addQuestion = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, n
     try {
         const { question, courseId, contentId } = req.body;
         const course = await course_model_1.default.findById(courseId);
+        const userData = await user_model_1.default.findById(req.auth._id);
         if (!mongoose_1.default.Types.ObjectId.isValid(contentId)) {
             return next(new ErrorHandler_1.default("Invalid content id", 400));
         }
@@ -143,14 +148,14 @@ exports.addQuestion = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, n
         }
         // create a new question object
         const newQuestion = {
-            user: req.user,
+            user: userData,
             question,
             questionReplies: [],
         };
         // add this question to our course content
         couseContent.questions.push(newQuestion);
         await notification_Model_1.default.create({
-            user: req.user?._id,
+            user: req.auth?._id,
             title: "New Question Received",
             message: `You have a new question in ${couseContent.title}`,
         });
@@ -169,6 +174,7 @@ exports.addAnwser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, nex
     try {
         const { answer, courseId, contentId, questionId } = req.body;
         const course = await course_model_1.default.findById(courseId);
+        const userData = await user_model_1.default.findById(req.auth._id);
         if (!mongoose_1.default.Types.ObjectId.isValid(contentId)) {
             return next(new ErrorHandler_1.default("Invalid content id", 400));
         }
@@ -182,7 +188,7 @@ exports.addAnwser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, nex
         }
         // create a new answer object
         const newAnswer = {
-            user: req.user,
+            user: userData,
             answer,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -190,10 +196,10 @@ exports.addAnwser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, nex
         // add this answer to our course content
         question.questionReplies.push(newAnswer);
         await course?.save();
-        if (req.user?._id === question.user._id) {
+        if (req.auth?._id === question.user._id) {
             // create a notification
             await notification_Model_1.default.create({
-                user: req.user?._id,
+                user: req.auth?._id,
                 title: "New Question Reply Received",
                 message: `You have a new question reply in ${couseContent.title}`,
             });
@@ -227,17 +233,18 @@ exports.addAnwser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, nex
 });
 exports.addReview = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
-        const userCourseList = req.user?.courses;
+        const userCourse = await user_model_1.default.findOne({ _id: req.auth._id });
+        // const userCourseList = req.user?.courses;
         const courseId = req.params.id;
         // check if courseId already exists in userCourseList based on _id
-        const courseExists = userCourseList?.some((course) => course._id.toString() === courseId.toString());
+        const courseExists = userCourse?.courses?.some((course) => course._id.toString() === courseId.toString());
         if (!courseExists) {
             return next(new ErrorHandler_1.default("You are not eligible to access this course", 404));
         }
         const course = await course_model_1.default.findById(courseId);
         const { review, rating } = req.body;
         const reviewData = {
-            user: req.user,
+            user: userCourse,
             rating,
             comment: review,
         };
@@ -270,6 +277,7 @@ exports.addReplyToReview = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, r
     try {
         const { comment, courseId, reviewId } = req.body;
         const course = await course_model_1.default.findById(courseId);
+        const userData = await user_model_1.default.findById(req?.auth?._id);
         if (!course) {
             return next(new ErrorHandler_1.default("Course not found", 404));
         }
@@ -278,7 +286,7 @@ exports.addReplyToReview = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, r
             return next(new ErrorHandler_1.default("Review not found", 404));
         }
         const replyData = {
-            user: req.user,
+            user: userData,
             comment,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),

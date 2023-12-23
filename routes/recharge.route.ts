@@ -1,7 +1,7 @@
 import express from "express";
 import { adminMiddleware, authorizeRoles, isAutheticated, requireSignin } from "../middleware/auth";
 
-import { getRecharge, placeRecharge, updateRecharge,getUserRecharge } from "../controllers/recharge.controller";
+import { getRecharge, placeRecharge, updateRecharge,getUserRecharge, getUserRechargeAdmin } from "../controllers/recharge.controller";
 
 const rechargeRoute = express.Router();
 
@@ -11,6 +11,8 @@ rechargeRoute.post("/update-recharge-status", requireSignin, adminMiddleware, up
 rechargeRoute.get("/get-recharge-all",requireSignin, adminMiddleware, getRecharge);
 // rechargeRoute.get("/get-recharge-all",isAutheticated, getRecharge);
 rechargeRoute.get("/get-recharge-user",requireSignin, getUserRecharge);
+rechargeRoute.post("/get-recharge-admin",requireSignin, getUserRechargeAdmin);
+
 
 
 

@@ -18,7 +18,7 @@ require("dotenv").config();
 // create order
 exports.createOrder = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
-        const { courseId, payment_info } = req.body;
+        const { courseId, payment_info, purchasedPrice } = req.body;
         // if (payment_info) {
         //   if ("id" in payment_info) {
         //     const paymentIntentId = payment_info.id;
@@ -30,7 +30,7 @@ exports.createOrder = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, n
         //     }
         //   }
         // }
-        const user = await user_model_1.default.findById(req.user?._id);
+        const user = await user_model_1.default.findById(req.auth?._id);
         const courseExistInUser = user?.courses.some((course) => course._id.toString() === courseId);
         if (courseExistInUser) {
             return next(new ErrorHandler_1.default("You have already purchased this course", 400));
@@ -80,6 +80,27 @@ exports.createOrder = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, n
         });
         course.purchased = course.purchased + 1;
         await course.save();
+        // Level 1  commission
+        const level1 = await user_model_1.default.updateOne({ user_invite: user?.parent_invt }, {
+            $inc: {
+                earning: Number((10 / 100) * Number(purchasedPrice)),
+                level1Recharge: Number((10 / 100) * Number(purchasedPrice)),
+            },
+        });
+        // Level 2  commission
+        const level2 = await user_model_1.default.updateOne({ user_invite: user?.grand_parent_invt }, {
+            $inc: {
+                earning: Number((3 / 100) * Number(purchasedPrice)),
+                level2Recharge: Number((3 / 100) * Number(purchasedPrice)),
+            },
+        });
+        // Level 3  commission
+        const level3 = await user_model_1.default.updateOne({ user_invite: user?.great_grand_parent_invt }, {
+            $inc: {
+                earning: Number((1 / 100) * Number(purchasedPrice)),
+                level3Recharge: Number((1 / 100) * Number(purchasedPrice)),
+            },
+        });
         (0, order_service_1.newOrder)(data, res, next);
     }
     catch (error) {

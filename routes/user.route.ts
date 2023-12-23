@@ -13,7 +13,8 @@ import {
   updateProfilePicture,
   updateUserInfo,
   updateUserRole,
-  getTestAuth
+  getTestAuth,
+  getSingleUser
 } from "../controllers/user.controller";
 import { adminMiddleware, authorizeRoles, isAutheticated } from "../middleware/auth";
 import { requireSignin } from "../middleware/auth";
@@ -70,5 +71,13 @@ userRouter.delete(
   adminMiddleware,
   deleteUser
 );
+
+userRouter.post(
+  "/get-single-user",
+  requireSignin,
+  adminMiddleware,
+  getSingleUser
+);
+
 
 export default userRouter;

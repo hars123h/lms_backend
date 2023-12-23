@@ -4,11 +4,11 @@ import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/catchAsyncErrors";
 import ErrorHandler from "../utils/ErrorHandler";
 import { redis } from "../utils/redis";
-import { ParamsDictionary } from 'express-serve-static-core';
-import { ParsedQs } from 'qs';
+import { ParamsDictionary } from "express-serve-static-core";
+import { ParsedQs } from "qs";
 
-
-interface RequestWithAuth extends Request<ParamsDictionary, any, any, ParsedQs> {
+interface RequestWithAuth
+  extends Request<ParamsDictionary, any, any, ParsedQs> {
   auth?: any; // Replace 'any' with the actual type of 'auth'
 }
 // Place Withdraw by the user
@@ -35,7 +35,7 @@ export const placeWithdraw = CatchAsyncError(
               },
             },
             $set: {
-              balance: validUser?.balance - data.withdrawalAmount,
+              earning: validUser?.earning - data.withdrawalAmount,
               lastWithdrawal: data.time,
             },
           },
@@ -48,7 +48,7 @@ export const placeWithdraw = CatchAsyncError(
         res.status(201).json({
           success: true,
           withdraw: withdraw,
-          user:validUser2
+          user: validUser2,
         });
       } else {
         res.status(400).json({
@@ -78,13 +78,22 @@ export const updateWithdraw = CatchAsyncError(
       const withdrawData = await WithdrawModel.findOne({
         _id: req.body.withdrawal_id,
       });
-      if (data.new_status === "Declined") {
-     const updateWith = await userModel.updateOne(
+      if (data.new_status === "Confirmed") {
+        const updateWith = await userModel.updateOne(
           { _id: withdrawData?.user },
           {
             $inc: {
-              balance: Number(data.withdrawal_value),
-              withdrawal_sum: -1 * Number(data.withdrawal_value),
+              withdrawal_sum: Number(data.withdrawal_value),
+            },
+          }
+        );
+      }
+      if (data.new_status === "Declined") {
+        const updateWith = await userModel.updateOne(
+          { _id: withdrawData?.user },
+          {
+            $inc: {
+              earning: Number(data.withdrawal_value),
             },
           }
         );
@@ -148,7 +157,7 @@ export const addBankDetails = CatchAsyncError(
         res.status(201).json({
           success: true,
           bank: addBank,
-          user:validUser2
+          user: validUser2,
         });
       } else {
         res.status(400).json({
@@ -179,11 +188,11 @@ export const setTradePassword = CatchAsyncError(
         );
         const validUser2 = await userModel.findOne({ _id: req.auth?._id });
         await redis.set(req.auth?._id, JSON.stringify(validUser2));
-        
+
         res.status(201).json({
           success: true,
           bank: setTradePassword,
-          user:validUser2
+          user: validUser2,
         });
       } else {
         return next(new ErrorHandler("Password Not Matched", 400));
@@ -194,22 +203,43 @@ export const setTradePassword = CatchAsyncError(
   }
 );
 
-
-  // get all Withdrawal --- only for Users
-  export const getUserWithdrawal = CatchAsyncError(
-    async (req: RequestWithAuth, res: Response, next: NextFunction) => {
-      try {
-        const withdrawal = await WithdrawModel.find({user:req.auth?._id}).sort({
+// get all Withdrawal --- only for Users
+export const getUserWithdrawal = CatchAsyncError(
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+    try {
+      const withdrawal = await WithdrawModel.find({ user: req.auth?._id }).sort(
+        {
           createdAt: -1,
-        });
-  
-        res.status(201).json({
-          success: true,
-          withdrawal,
-        });
-      } catch (error: any) {
-        return next(new ErrorHandler(error.message, 500));
-      }
+        }
+      );
+
+      res.status(201).json({
+        success: true,
+        withdrawal,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
     }
-  );
-  
+  }
+);
+
+// get all Withdrawal --- only for Users
+export const getUserWithdrawalAdmin = CatchAsyncError(
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+    try {
+      const data = req.body
+      const withdrawal = await WithdrawModel.find({ user: data?.userId }).sort(
+        {
+          createdAt: -1,
+        }
+      );
+
+      res.status(201).json({
+        success: true,
+        withdrawal,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);

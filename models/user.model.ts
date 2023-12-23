@@ -8,6 +8,10 @@ const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export interface IUser extends Document {
   name: string;
   email: string;
+  whatsappNo:string;
+  teleId:string;
+  dob:string;
+  profession:string;
   password: string;
   user_invite: string;
   parent_invt: string;
@@ -20,6 +24,9 @@ export interface IUser extends Document {
   role: string;
   isVerified: boolean;
   courses: Array<{ courseId: string }>;
+  level1Recharge:number;
+  level2Recharge:number;
+  level3Recharge:number;
   firstLevelData: Array<{ userId: string }>;
   secondLevelData: Array<{ userId: string }>;
   thirdLevelData: Array<{ userId: string }>;
@@ -49,6 +56,10 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       type: String,
       required: [true, "Please enter your name"],
     },
+    whatsappNo:String,
+    teleId:String,
+    dob:String,
+    profession:String,
     email: {
       type: String,
       required: [true, "Please enter your email"],
@@ -96,6 +107,18 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       default: 0,
     },
     earning: {
+      type: Number,
+      default: 0,
+    },
+    level1Recharge: {
+      type: Number,
+      default: 0,
+    },
+    level2Recharge: {
+      type: Number,
+      default: 0,
+    },
+    level3Recharge: {
       type: Number,
       default: 0,
     },

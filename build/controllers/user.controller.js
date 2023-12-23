@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUserRole = exports.getTestAuth = exports.getAllUsers = exports.updateProfilePicture = exports.updatePassword = exports.updateUserInfo = exports.socialAuth = exports.getUserInfo = exports.updateAccessToken = exports.logoutUser = exports.loginUser = exports.activateUser = exports.createActivationToken = exports.registrationUser = void 0;
+exports.deleteUser = exports.updateUserRole = exports.getTestAuth = exports.getAllUsers = exports.updateProfilePicture = exports.updatePassword = exports.updateUserInfo = exports.socialAuth = exports.getSingleUser = exports.getUserInfo = exports.updateAccessToken = exports.logoutUser = exports.loginUser = exports.activateUser = exports.createActivationToken = exports.registrationUser = void 0;
 require("dotenv").config();
 const user_model_1 = __importDefault(require("../models/user.model"));
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
@@ -207,6 +207,22 @@ exports.getUserInfo = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, n
         return next(new ErrorHandler_1.default(error.message, 400));
     }
 });
+// get user info --only Admin
+exports.getSingleUser = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
+    try {
+        const data = req.body;
+        const userId = req.auth?._id;
+        // console.log("USER", userId);
+        const user = await user_model_1.default.findOne({ _id: data?.userId });
+        res.status(200).json({
+            success: true,
+            user,
+        });
+    }
+    catch (error) {
+        return next(new ErrorHandler_1.default(error.message, 400));
+    }
+});
 // social auth
 exports.socialAuth = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
@@ -226,11 +242,23 @@ exports.socialAuth = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, ne
 });
 exports.updateUserInfo = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
-        const { name } = req.body;
+        const { name, whatsappNo, teleId, dob, profession } = req.body;
         const userId = req.auth?._id;
         const user = await user_model_1.default.findById(userId);
         if (name && user) {
             user.name = name;
+        }
+        if (whatsappNo && user) {
+            user.whatsappNo = whatsappNo;
+        }
+        if (teleId && user) {
+            user.teleId = teleId;
+        }
+        if (dob && user) {
+            user.dob = dob;
+        }
+        if (profession && user) {
+            user.profession = profession;
         }
         await user?.save();
         // await redis.set(userId, JSON.stringify(user));
@@ -324,7 +352,7 @@ exports.getTestAuth = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, n
         console.log("userId", req.auth);
         res.status(201).json({
             success: true,
-            message: "Testing  Jwt"
+            message: "Testing  Jwt",
         });
     }
     catch (error) {

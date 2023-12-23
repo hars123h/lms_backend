@@ -8,6 +8,7 @@ import {
   setTradePassword,
   addBankDetails,
   getUserWithdrawal,
+  getUserWithdrawalAdmin
 } from "../controllers/withdraw.controller";
 const withdrawRoute = express.Router();
 
@@ -17,5 +18,7 @@ withdrawRoute.post("/update-withdrawal-status", requireSignin, adminMiddleware, 
 withdrawRoute.post("/add-bank", requireSignin, addBankDetails);
 withdrawRoute.post("/trade-password", requireSignin, setTradePassword);
 withdrawRoute.get("/get-user-withdrawal", requireSignin, getUserWithdrawal);
+withdrawRoute.post("/get-admin-withdrawal", requireSignin, getUserWithdrawalAdmin);
+
 
 export default withdrawRoute;

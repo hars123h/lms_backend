@@ -12,4 +12,5 @@ rechargeRoute.post("/update-recharge-status", auth_1.requireSignin, auth_1.admin
 rechargeRoute.get("/get-recharge-all", auth_1.requireSignin, auth_1.adminMiddleware, recharge_controller_1.getRecharge);
 // rechargeRoute.get("/get-recharge-all",isAutheticated, getRecharge);
 rechargeRoute.get("/get-recharge-user", auth_1.requireSignin, recharge_controller_1.getUserRecharge);
+rechargeRoute.post("/get-recharge-admin", auth_1.requireSignin, recharge_controller_1.getUserRechargeAdmin);
 exports.default = rechargeRoute;

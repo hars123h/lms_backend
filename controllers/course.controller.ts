@@ -12,6 +12,15 @@ import sendMail from "../utils/sendMail";
 import NotificationModel from "../models/notification.Model";
 // import axios from "axios";
 
+import { ParamsDictionary } from 'express-serve-static-core';
+import { ParsedQs } from 'qs';
+import userModel from "../models/user.model";
+
+
+interface RequestWithAuth extends Request<ParamsDictionary, any, any, ParsedQs> {
+  auth?: any; // Replace 'any' with the actual type of 'auth'
+}
+
 // upload course
 export const uploadCourse = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -141,14 +150,21 @@ export const getAllCourses = CatchAsyncError(
 
 // get course content -- only for valid user
 export const getCourseByUser = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
-      const userCourseList = req.user?.courses;
+      console.log("Auth me kya hai", req.auth);
+      const userCourses = await userModel.findOne({_id:req.auth._id})
+      // const userCourseList = req.user?.courses;
       const courseId = req.params.id;
 
-      const courseExists = userCourseList?.find(
+      console.log("User cOURSES", userCourses?.courses);
+      
+      const courseExists = userCourses?.courses?.find(
         (course: any) => course._id.toString() === courseId
       );
+
+      console.log("Course Exist", courseExists);
+      
 
       if (!courseExists) {
         return next(
@@ -178,10 +194,11 @@ interface IAddQuestionData {
 }
 
 export const addQuestion = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
       const { question, courseId, contentId }: IAddQuestionData = req.body;
       const course = await CourseModel.findById(courseId);
+      const userData = await userModel.findById(req.auth._id)
 
       if (!mongoose.Types.ObjectId.isValid(contentId)) {
         return next(new ErrorHandler("Invalid content id", 400));
@@ -197,7 +214,7 @@ export const addQuestion = CatchAsyncError(
 
       // create a new question object
       const newQuestion: any = {
-        user: req.user,
+        user: userData,
         question,
         questionReplies: [],
       };
@@ -206,7 +223,7 @@ export const addQuestion = CatchAsyncError(
       couseContent.questions.push(newQuestion);
 
       await NotificationModel.create({
-        user: req.user?._id,
+        user: req.auth?._id,
         title: "New Question Received",
         message: `You have a new question in ${couseContent.title}`,
       });
@@ -233,12 +250,14 @@ interface IAddAnswerData {
 }
 
 export const addAnwser = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
       const { answer, courseId, contentId, questionId }: IAddAnswerData =
         req.body;
 
       const course = await CourseModel.findById(courseId);
+      const userData = await userModel.findById(req.auth._id)
+
 
       if (!mongoose.Types.ObjectId.isValid(contentId)) {
         return next(new ErrorHandler("Invalid content id", 400));
@@ -262,7 +281,7 @@ export const addAnwser = CatchAsyncError(
 
       // create a new answer object
       const newAnswer: any = {
-        user: req.user,
+        user: userData,
         answer,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -273,10 +292,10 @@ export const addAnwser = CatchAsyncError(
 
       await course?.save();
 
-      if (req.user?._id === question.user._id) {
+      if (req.auth?._id === question.user._id) {
         // create a notification
         await NotificationModel.create({
-          user: req.user?._id,
+          user: req.auth?._id,
           title: "New Question Reply Received",
           message: `You have a new question reply in ${couseContent.title}`,
         });
@@ -321,14 +340,13 @@ interface IAddReviewData {
 }
 
 export const addReview = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
-      const userCourseList = req.user?.courses;
-
+      const userCourse = await userModel.findOne({_id:req.auth._id})
+      // const userCourseList = req.user?.courses;
       const courseId = req.params.id;
-
       // check if courseId already exists in userCourseList based on _id
-      const courseExists = userCourseList?.some(
+      const courseExists = userCourse?.courses?.some(
         (course: any) => course._id.toString() === courseId.toString()
       );
 
@@ -343,7 +361,7 @@ export const addReview = CatchAsyncError(
       const { review, rating } = req.body as IAddReviewData;
 
       const reviewData: any = {
-        user: req.user,
+        user: userCourse,
         rating,
         comment: review,
       };
@@ -389,11 +407,12 @@ interface IAddReviewData {
   reviewId: string;
 }
 export const addReplyToReview = CatchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: RequestWithAuth, res: Response, next: NextFunction) => {
     try {
       const { comment, courseId, reviewId } = req.body as IAddReviewData;
 
       const course = await CourseModel.findById(courseId);
+      const userData = await userModel.findById(req?.auth?._id)
 
       if (!course) {
         return next(new ErrorHandler("Course not found", 404));
@@ -408,7 +427,7 @@ export const addReplyToReview = CatchAsyncError(
       }
 
       const replyData: any = {
-        user: req.user,
+        user: userData,
         comment,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
