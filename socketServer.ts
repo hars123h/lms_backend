@@ -13,6 +13,12 @@ export const initSocketServer = (server: http.Server) => {
       io.emit("newNotification", data);
     });
 
+    socket.on("recharge", (data) => {
+      // Broadcast the Recharge data  (admin dashboard)
+      io.emit("newRecharge", data);
+    });
+
+
     socket.on("disconnect", () => {
       console.log("A user disconnected");
     });

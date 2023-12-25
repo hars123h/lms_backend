@@ -15,7 +15,7 @@ import layoutRouter from "./routes/layout.route";
 import { rateLimit } from 'express-rate-limit'
 
 
-
+ 
 
 //bodyparser
 app.use(express.json({ limit: "50mb" }));
@@ -26,8 +26,7 @@ app.use(cookieParser());
 //cors
 app.use(
   cors({
-    origin: ["https://lms-frontend-azure-eight.vercel.app","http://localhost:3000"],
-    credentials: true,
+    origin: '*'
   })
 );
 

@@ -11,6 +11,10 @@ const initSocketServer = (server) => {
             // Broadcast the notification data to all connected clients (admin dashboard)
             io.emit("newNotification", data);
         });
+        socket.on("recharge", (data) => {
+            // Broadcast the Recharge data  (admin dashboard)
+            io.emit("newRecharge", data);
+        });
         socket.on("disconnect", () => {
             console.log("A user disconnected");
         });

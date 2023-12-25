@@ -10,6 +10,7 @@ const catchAsyncErrors_1 = require("../middleware/catchAsyncErrors");
 const ErrorHandler_1 = __importDefault(require("../utils/ErrorHandler"));
 const redis_1 = require("../utils/redis");
 const recharge_model_1 = __importDefault(require("../models/recharge.model"));
+const notification_Model_1 = __importDefault(require("../models/notification.Model"));
 // Place Recharge by the user
 exports.placeRecharge = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res, next) => {
     try {
@@ -47,6 +48,12 @@ exports.placeRecharge = (0, catchAsyncErrors_1.CatchAsyncError)(async (req, res,
         });
         const validUser2 = await user_model_1.default.findOne({ _id: req.auth?._id });
         await redis_1.redis.set(req.user?._id, JSON.stringify(validUser2));
+        // Await Notification 
+        await notification_Model_1.default.create({
+            user: req.auth?._id,
+            title: "New Review Received",
+            message: `${validUser2?.name} has recharge request of  ${data?.recharge_value}`,
+        });
         res.status(201).json({
             success: true,
             recharge: recharge,

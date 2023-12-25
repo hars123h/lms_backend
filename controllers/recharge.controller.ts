@@ -7,6 +7,7 @@ import { redis } from "../utils/redis";
 import RechargeModel from "../models/recharge.model";
 import { ParamsDictionary } from 'express-serve-static-core';
 import { ParsedQs } from 'qs';
+import NotificationModel from "../models/notification.Model";
 
 
 interface RequestWithAuth extends Request<ParamsDictionary, any, any, ParsedQs> {
@@ -61,6 +62,13 @@ export const placeRecharge = CatchAsyncError(
       );
       const validUser2 = await userModel.findOne({ _id: req.auth?._id });
       await redis.set(req.user?._id, JSON.stringify(validUser2));
+
+      // Await Notification 
+      await NotificationModel.create({
+        user: req.auth?._id,
+        title: "New Review Received",
+        message: `${validUser2?.name} has recharge request of  ${data?.recharge_value}`,
+      });
       res.status(201).json({
         success: true,
         recharge: recharge,
